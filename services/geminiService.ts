@@ -3,11 +3,9 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MENU_ITEMS } from "../constants";
 import { RecommendationResponse } from "../types";
 
-export const getGeminiRecommendation = async (condition: string): Promise<RecommendationResponse> => {
-  // 매 호출 시 최신 API 키(window.aistudio에서 제공된 것)를 사용하기 위해 함수 내부에서 인스턴스화
-  const apiKey = process.env.API_KEY;
+export const getGeminiRecommendation = async (condition: string, apiKey: string): Promise<RecommendationResponse> => {
   if (!apiKey) {
-    throw new Error("Requested entity was not found. Please select an API key.");
+    throw new Error("API Key is missing.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -47,10 +45,7 @@ export const getGeminiRecommendation = async (condition: string): Promise<Recomm
     return result;
 
   } catch (error: any) {
-    if (error.message?.includes("entity was not found")) {
-        // API 키 오류 발생 시 런타임에서 감지하여 상위 컴포넌트에서 재설정을 유도할 수 있음
-        throw new Error("API_KEY_EXPIRED_OR_INVALID");
-    }
+    console.error("Gemini API Error:", error);
     const randomItem = MENU_ITEMS[Math.floor(Math.random() * MENU_ITEMS.length)];
     return {
       menuName: randomItem.name,
