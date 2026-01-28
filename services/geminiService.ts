@@ -7,29 +7,43 @@ import { RecommendationResponse } from "../types";
  * 사용자가 입력한 API 키가 실제로 작동하는지 테스트합니다.
  */
 export const validateApiKey = async (apiKey: string): Promise<boolean> => {
-  if (!apiKey || apiKey.length < 20) return false;
+  const trimmedKey = apiKey.trim();
+  if (!trimmedKey || trimmedKey.length < 20) {
+    console.warn("Invalid API Key format: Too short.");
+    return false;
+  }
   
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    // 최소한의 토큰으로 모델 응답 테스트
+    const ai = new GoogleGenAI({ apiKey: trimmedKey });
+    // 간단한 인사말로 API 연결 테스트 (가장 가벼운 모델 사용)
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: "Connection test",
-      config: { maxOutputTokens: 1 }
+      contents: "Hi",
+      config: {
+        // 지침 준수: maxOutputTokens 설정 시 thinkingBudget 함께 설정하거나 제거
+        maxOutputTokens: 10,
+        thinkingConfig: { thinkingBudget: 0 }
+      }
     });
-    return !!response.text;
-  } catch (error) {
-    console.error("API Key Validation Failed:", error);
+    
+    const isSuccess = !!response.text;
+    if (!isSuccess) console.error("API response has no text content.");
+    return isSuccess;
+  } catch (error: any) {
+    // 상세 에러 로그 출력 (401: Invalid Key, 403: API Not Enabled 등)
+    console.error("Gemini API Key Validation Error:", error);
+    console.info("Please check if Gemini API is enabled for this project at https://aistudio.google.com/");
     return false;
   }
 };
 
 export const getGeminiRecommendation = async (condition: string, apiKey: string): Promise<RecommendationResponse> => {
-  if (!apiKey) {
+  const trimmedKey = apiKey.trim();
+  if (!trimmedKey) {
     throw new Error("인증이 필요합니다.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: trimmedKey });
   const menuNames = MENU_ITEMS.map(item => item.name).join(", ");
 
   const systemInstruction = `
@@ -60,10 +74,11 @@ export const getGeminiRecommendation = async (condition: string, apiKey: string)
       }
     });
 
-    const result = JSON.parse(response.text || "{}");
+    const text = response.text || "{}";
+    const result = JSON.parse(text);
     return result as RecommendationResponse;
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    console.error("Gemini Recommendation API Error:", error);
     const randomItem = MENU_ITEMS[Math.floor(Math.random() * MENU_ITEMS.length)];
     return {
       menuName: randomItem.name,

@@ -13,7 +13,8 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onComplete }) => {
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleVerify = async () => {
-    if (!inputKey.trim()) {
+    const trimmedKey = inputKey.trim();
+    if (!trimmedKey) {
       setErrorMsg('API 키를 입력해 주세요.');
       setStatus('error');
       return;
@@ -22,15 +23,15 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onComplete }) => {
     setStatus('validating');
     setErrorMsg('');
 
-    const isValid = await validateApiKey(inputKey.trim());
+    const isValid = await validateApiKey(trimmedKey);
 
     if (isValid) {
       setStatus('success');
       // 성공 피드백을 위해 약간의 지연 후 대시보드 진입
-      setTimeout(() => onComplete(inputKey.trim()), 1000);
+      setTimeout(() => onComplete(trimmedKey), 1000);
     } else {
       setStatus('error');
-      setErrorMsg('유효하지 않은 API 키입니다. 다시 확인해 주세요.');
+      setErrorMsg('유효하지 않은 API 키입니다. (개발자 도구 콘솔에서 상세 에러를 확인하세요)');
     }
   };
 
@@ -68,6 +69,7 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onComplete }) => {
                 value={inputKey}
                 onChange={(e) => setInputKey(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
+                autoComplete="off"
                 className={`w-full bg-gray-50 border-2 rounded-[2rem] px-12 py-6 text-xl focus:outline-none transition-all
                   ${status === 'error' ? 'border-red-200 focus:border-red-500 bg-red-50/30' : 'border-gray-100 focus:border-green-600'}
                 `}
@@ -77,9 +79,12 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onComplete }) => {
           </div>
 
           {status === 'error' && (
-            <div className="flex items-center gap-3 text-red-500 bg-red-50 p-5 rounded-3xl text-sm font-bold border border-red-100 animate-in slide-in-from-top-2">
-              <AlertCircle size={20} className="shrink-0" />
-              <span>{errorMsg}</span>
+            <div className="flex flex-col gap-2 text-red-500 bg-red-50 p-5 rounded-3xl text-sm font-bold border border-red-100 animate-in slide-in-from-top-2">
+              <div className="flex items-center gap-3">
+                <AlertCircle size={20} className="shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+              <p className="text-[11px] font-medium opacity-70 ml-8">Tip: Google AI Studio에서 생성한 'Pay-as-you-go' 또는 유효한 API 키인지 확인하세요.</p>
             </div>
           )}
 
