@@ -3,22 +3,25 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MENU_ITEMS } from "../constants";
 import { RecommendationResponse } from "../types";
 
-// The API key is obtained exclusively from process.env.API_KEY as per guidelines.
-export const getGeminiRecommendation = async (condition: string): Promise<RecommendationResponse> => {
-  // Initialize the Gemini AI client using the provided environment variable.
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+export const getGeminiRecommendation = async (condition: string, apiKey: string): Promise<RecommendationResponse> => {
+  if (!apiKey) {
+    throw new Error("API 키가 제공되지 않았습니다.");
+  }
+
+  // 사용자가 입력한 API 키로 인스턴스 생성
+  const ai = new GoogleGenAI({ apiKey });
   const menuNames = MENU_ITEMS.map(item => item.name).join(", ");
 
   const systemInstruction = `
-    당신은 '그린FC'의 영양 코치입니다. 
-    메뉴: [${menuNames}] 중에서만 선택하세요.
-    상황에 맞춰 든든한 조언과 함께 JSON 형식으로 응답하세요.
+    당신은 '그린FC'의 프로 축구팀 전담 영양 코치입니다. 
+    메뉴: [${menuNames}] 중에서만 반드시 하나를 선택하세요.
+    상황(condition)에 맞춰 선수들에게 기운을 북돋아주는 말투로 JSON 응답을 하세요.
   `;
 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `상황: ${condition}`,
+      contents: `상황 설명: ${condition}`,
       config: {
         systemInstruction: systemInstruction,
         responseMimeType: "application/json",
@@ -36,11 +39,10 @@ export const getGeminiRecommendation = async (condition: string): Promise<Recomm
     return JSON.parse(response.text || "{}") as RecommendationResponse;
   } catch (error) {
     console.error("Gemini API Error:", error);
-    // Fallback logic for graceful error handling.
     const randomItem = MENU_ITEMS[Math.floor(Math.random() * MENU_ITEMS.length)];
     return {
       menuName: randomItem.name,
-      reason: "오늘 훈련 강도를 보니 이 메뉴가 에너지를 채워줄 최적의 선택입니다!"
+      reason: "현재 통신 상태가 원활하지 않지만, 코치로서 이 메뉴를 강력 추천합니다!"
     };
   }
 };

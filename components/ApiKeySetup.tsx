@@ -10,21 +10,20 @@ interface ApiKeySetupProps {
 export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onComplete }) => {
   const [inputKey, setInputKey] = useState('');
   const [status, setStatus] = useState<'idle' | 'validating' | 'error' | 'success'>('idle');
-  const [error, setError] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleVerify = async () => {
     if (!inputKey.trim()) {
-      setError('인증키를 입력해 주세요.');
+      setErrorMsg('API 키를 입력해 주세요.');
       setStatus('error');
       return;
     }
 
     setStatus('validating');
-    setError('');
+    setErrorMsg('');
 
     try {
       const ai = new GoogleGenAI({ apiKey: inputKey.trim() });
-      // 실제 API 유효성 테스트 (가장 가벼운 모델 호출)
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: "test",
@@ -38,61 +37,61 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onComplete }) => {
     } catch (err: any) {
       console.error(err);
       setStatus('error');
-      setError('유효하지 않은 API 키이거나 권한이 없습니다. 다시 확인해 주세요.');
+      setErrorMsg('유효하지 않은 API 키입니다. 다시 확인해 주세요.');
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-green-900 flex items-center justify-center p-6 overflow-y-auto">
-      <div className="bg-white rounded-[3.5rem] shadow-2xl max-w-2xl w-full p-10 md:p-20 text-center animate-in zoom-in duration-500">
-        <div className="w-24 h-24 bg-green-100 text-green-600 rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-inner">
+    <div className="fixed inset-0 z-[100] bg-green-950 flex items-center justify-center p-6 overflow-y-auto">
+      <div className="bg-white rounded-[4rem] shadow-2xl max-w-2xl w-full p-10 md:p-20 text-center animate-in zoom-in duration-500 border border-green-800/20">
+        <div className="w-24 h-24 bg-green-100 text-green-600 rounded-[2rem] flex items-center justify-center mx-auto mb-10 shadow-inner">
           <Trophy size={48} fill="currentColor" />
         </div>
         
-        <h1 className="text-4xl font-black text-gray-900 mb-6 tracking-tight">
+        <h1 className="text-4xl font-black text-gray-900 mb-6 tracking-tighter">
           그린FC 관리자 인증
         </h1>
         
         <p className="text-gray-500 mb-12 text-lg font-medium leading-relaxed">
-          보안 배포 모드입니다. <br/>
-          코치님의 유료 Gemini API 키를 입력하여 시작하세요.
+          이 앱을 사용하려면 본인의 <strong className="text-green-600">Gemini API 키</strong>가 필요합니다. <br/>
+          입력된 키는 브라우저에만 임시 저장됩니다.
         </p>
 
         <div className="space-y-6 text-left mb-12">
           <div className="relative">
-            <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-4 mb-2 block">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-6 mb-2 block">
               Gemini API Key
             </label>
             <input
               type="password"
-              placeholder="API 키를 여기에 붙여넣으세요"
+              placeholder="API 키를 입력하세요"
               value={inputKey}
               onChange={(e) => setInputKey(e.target.value)}
-              className={`w-full bg-gray-50 border-2 rounded-3xl px-8 py-6 text-xl focus:outline-none transition-all
+              className={`w-full bg-gray-50 border-2 rounded-[2rem] px-10 py-6 text-xl focus:outline-none transition-all
                 ${status === 'error' ? 'border-red-200 focus:border-red-500' : 'border-gray-100 focus:border-green-500'}
               `}
             />
-            <Key className="absolute right-8 top-[3.3rem] text-gray-300" size={24} />
+            <Key className="absolute right-10 top-[3.2rem] text-gray-300" size={24} />
           </div>
 
           {status === 'error' && (
-            <div className="flex items-center gap-3 text-red-500 bg-red-50 p-5 rounded-2xl text-sm font-bold border border-red-100 animate-in slide-in-from-top-2">
+            <div className="flex items-center gap-3 text-red-500 bg-red-50 p-5 rounded-3xl text-sm font-bold border border-red-100 animate-in slide-in-from-top-2">
               <AlertCircle size={20} />
-              <span>{error}</span>
+              <span>{errorMsg}</span>
             </div>
           )}
 
           {status === 'success' && (
-            <div className="flex items-center gap-3 text-green-600 bg-green-50 p-5 rounded-2xl text-sm font-bold border border-green-100 animate-in slide-in-from-top-2">
+            <div className="flex items-center gap-3 text-green-600 bg-green-50 p-5 rounded-3xl text-sm font-bold border border-green-100 animate-in slide-in-from-top-2">
               <CheckCircle2 size={20} />
-              <span>인증이 완료되었습니다. 대시보드를 생성합니다.</span>
+              <span>인증 성공! 대시보드로 이동합니다.</span>
             </div>
           )}
 
-          <div className="bg-gray-50 p-6 rounded-3xl flex gap-4 items-start border border-gray-100 shadow-inner">
+          <div className="bg-gray-50 p-6 rounded-[2rem] flex gap-4 items-start border border-gray-100">
             <ShieldCheck className="text-green-500 mt-1 shrink-0" size={24} />
             <p className="text-xs text-gray-400 font-bold leading-relaxed">
-              입력하신 키는 서버로 전송되거나 저장되지 않으며, 오직 코치님의 현재 브라우저 세션 내에서만 암호화되어 작동합니다.
+              사용자의 보안을 위해 입력된 키는 외부 서버에 저장되지 않으며 실시간 API 호출에만 사용됩니다.
             </p>
           </div>
         </div>
@@ -106,11 +105,20 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onComplete }) => {
             <Loader2 className="animate-spin" size={28} />
           ) : (
             <>
-              인증 후 앱 시작하기
+              인증 및 시작하기
               <ArrowRight className="group-hover:translate-x-2 transition-transform" />
             </>
           )}
         </button>
+
+        <a 
+          href="https://aistudio.google.com/app/apikey" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="mt-8 inline-block text-xs font-bold text-gray-400 hover:text-green-600 transition-colors underline underline-offset-4"
+        >
+          API 키가 없으신가요? 여기서 무료로 받기
+        </a>
       </div>
     </div>
   );
